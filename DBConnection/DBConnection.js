@@ -1,5 +1,5 @@
 const { MongoClient, ServerApiVersion } = require('mongodb');
-
+const Color = require('color');
 //Online Connection
 
 // const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ermhfxw.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -30,6 +30,7 @@ async function dbConnect() {
     }
 };
 
+// Database collections
 const QELDB = client.db('quickEduLiveDatabase');
 const classCollection = QELDB.collection('class');
 
