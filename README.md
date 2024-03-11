@@ -1,9 +1,11 @@
 # Project Title: QuickEduLive Server
 
-# Project Info
+## Project Info
+QuickEduLive is an Educational Platform.
 
-## Features
-
-## Technology
-Express
-MongoDb
+## Server Side Technology
+MongoDB
+Express JS
+Node JS
+Dotenv
+JWT

@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 
@@ -18,33 +17,17 @@ const { getData,
     deleteData
 } = require('./CRUD/CRUD');
 
-// Requiring JWT Create Function
-const generate_user_token = require('./JWT_Token/JWT_Token');
 
 //Middleware
 app.use(cors());
 app.use(express.json());
-
-// JWT Verify Function
-function verifyJWT(req, res, next) {
-    const authHeaders = req.headers.authentication;
-    if (!authHeaders) {
-        res.status(401).res.send({ message: 'Unauthorize Access!' });
-    };
-    const token = authHeaders.split(' ')[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
-        if (err) {
-            res.status(401).res.send({ message: 'Unauthorize Access!' });
-        };
-        req.decoded = decoded;
-        next();
-    });
-};
+// Requiring User JWT Token Generate Function
+const { generate_user_token, verifyJWT } = require('./JWT_Token/JWT_Token');
 
 //MongoDb Connection
 dbConnect().catch(console.dir + 'MongoDb Connection Error');
 
-// jwt user token generate
+// JWT user Token generate
 app.post('/jwt', (req, res) => {
     const user_Token = generate_user_token(req.body);
     user_Token
@@ -64,9 +47,37 @@ app.post('/jwt', (req, res) => {
 });
 
 // Class CRUD
-// Getting Classes
+// Getting Classes 
+// app.get('/class', verifyJWT, async (req, res) alternative for verifyJWT
+
 app.get('/class', async (req, res) => {
-    const getClass = getData(classCollection);
+
+    /* verify JWT with email */
+    // const decoded = req.decoded;
+    // if (decoded.email !== req.query.email) {
+    //     res.send({ message: "unauthorize access" });
+    //     // res.status(403).res.send({ message: "unauthorize access" });
+    // };
+
+    // Showing Specific Email Classes 
+    let query = {};
+    
+    if (req.query.email) {
+        query = {
+            email: req.query.email
+        };
+    };
+
+    // const search = req.query.search;
+    // if (search) {
+    //     query = {
+    //         $text: {
+    //             $search: search
+    //         }
+    //     };
+    // };
+
+    const getClass = getData(classCollection, query);
     getClass
         .then(result => {
             return res.send({
@@ -84,6 +95,7 @@ app.get('/class', async (req, res) => {
 });
 
 // Getting Specific Class
+// app.get('/class/:id', verifyJWT, async (req, res) alternative for verifyJWT
 app.get('/class/:id', async (req, res) => {
     const id = req.params.id;
     const getSpecificClass = getSpecificData(id, classCollection);
@@ -103,7 +115,8 @@ app.get('/class/:id', async (req, res) => {
         });
 });
 
-// Creating new classes
+// Creating new class
+// app.post('/class', async (req, res) alternative for verifyJWT
 app.post('/class', async (req, res) => {
     const data = req.body;
     const newClass = postData(classCollection, data);
@@ -124,6 +137,7 @@ app.post('/class', async (req, res) => {
 });
 
 // UpdateClass
+// app.put('/class/:id', async (req, res) alternative for verifyJWT
 app.put('/class/:id', async (req, res) => {
     const id = req.params.id;
     const classData = req.body;
@@ -151,6 +165,7 @@ app.put('/class/:id', async (req, res) => {
 });
 
 // Deleting Classes
+// app.delete('/class/:id', async (req, res) alternative for verifyJWT
 app.delete('/class/:id', async (req, res) => {
     const id = req.params.id;
     const deleteClass = deleteData(id, classCollection);
