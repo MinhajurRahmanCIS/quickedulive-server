@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
 const app = express();
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 const port = process.env.PORT || 5000;
 
 //Requiring MongoDB Connection & Collections
@@ -17,13 +18,50 @@ const { getData,
     deleteData
 } = require('./CRUD/CRUD');
 
+// Requiring JWT Create Function
+const generate_user_token = require('./JWT_Token/JWT_Token');
+
 //Middleware
 app.use(cors());
 app.use(express.json());
 
+// JWT Verify Function
+function verifyJWT(req, res, next) {
+    const authHeaders = req.headers.authentication;
+    if (!authHeaders) {
+        res.status(401).res.send({ message: 'Unauthorize Access!' });
+    };
+    const token = authHeaders.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            res.status(401).res.send({ message: 'Unauthorize Access!' });
+        };
+        req.decoded = decoded;
+        next();
+    });
+};
+
 //MongoDb Connection
 dbConnect().catch(console.dir + 'MongoDb Connection Error');
 
+// jwt user token generate
+app.post('/jwt', (req, res) => {
+    const user_Token = generate_user_token(req.body);
+    user_Token
+        .then(token => {
+            return res.send({
+                success: true,
+                message: "User Token Generated",
+                data: { token },
+            });
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
 
 // Class CRUD
 // Getting Classes
@@ -97,19 +135,19 @@ app.put('/class/:id', async (req, res) => {
     };
     const updateClass = updateData(id, updatedClassData, options, classCollection);
     updateClass
-    .then(result => {
-        return res.send({
-            success: true,
-            message: "Class Updated",
-            data: result,
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Class Updated",
+                data: result,
+            })
         })
-    })
-    .catch(err => {
-        return res.send({
-            success: false,
-            message: err?.message
-        })
-    });
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
 });
 
 // Deleting Classes
