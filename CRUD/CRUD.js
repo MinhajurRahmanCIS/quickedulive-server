@@ -2,8 +2,7 @@ const { ObjectId } = require("mongodb");
 
 // Get Function
 const getData = async (collection, query) => {
-    const cursor = collection.find(query);
-    const result = await cursor.toArray();
+    const result = await collection.find(query).toArray();
     return result;
 };
 

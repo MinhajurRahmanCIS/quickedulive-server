@@ -31,10 +31,12 @@ async function dbConnect() {
 
 // Database collections
 const QELDB = client.db('quickEduLiveDatabase');
-const classCollection = QELDB.collection('class');
+const classesCollection = QELDB.collection('classes');
+const usersCollection = QELDB.collection('users');
 
 
 module.exports = {
     dbConnect,
-    classCollection
+    usersCollection,
+    classesCollection
 }

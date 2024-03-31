@@ -6,7 +6,8 @@ const port = process.env.PORT || 5000;
 
 //Requiring MongoDB Connection & Collections
 const { dbConnect,
-    classCollection
+    usersCollection,
+    classesCollection
 } = require('./DBConnection/DBConnection');
 
 //Requiring CRUD Functions
@@ -21,21 +22,26 @@ const { getData,
 //Middleware
 app.use(cors());
 app.use(express.json());
-// Requiring User JWT Token Generate Function
-const { generate_user_token, verifyJWT } = require('./JWT_Token/JWT_Token');
 
 //MongoDb Connection
 dbConnect().catch(console.dir + 'MongoDb Connection Error');
 
+// Requiring JWT Function to get user_token, verifyJWT user, verifyAdmin
+const { user_token,
+    verifyJWT,
+    verifyAdmin
+} = require('./JWT_Token/JWT_Token');
+
 // JWT user Token generate
-app.post('/jwt', (req, res) => {
-    const user_Token = generate_user_token(req.body);
-    user_Token
-        .then(token => {
+app.get('/jwt', (req, res) => {
+    const email = req.query.email;
+    const userToken = user_token(email, usersCollection);
+    userToken
+        .then(accessToken => {
             return res.send({
                 success: true,
                 message: "User Token Generated",
-                data: { token },
+                data: { accessToken },
             });
         })
         .catch(err => {
@@ -50,7 +56,7 @@ app.post('/jwt', (req, res) => {
 // Getting Classes 
 // app.get('/class', verifyJWT, async (req, res) alternative for verifyJWT
 
-app.get('/class', async (req, res) => {
+app.get('/classes', async (req, res) => {
 
     /* verify JWT with email */
     // const decoded = req.decoded;
@@ -61,7 +67,7 @@ app.get('/class', async (req, res) => {
 
     // Showing Specific Email Classes 
     let query = {};
-    
+
     if (req.query.email) {
         query = {
             email: req.query.email
@@ -77,7 +83,7 @@ app.get('/class', async (req, res) => {
     //     };
     // };
 
-    const getClass = getData(classCollection, query);
+    const getClass = getData(classesCollection, query);
     getClass
         .then(result => {
             return res.send({
@@ -96,15 +102,15 @@ app.get('/class', async (req, res) => {
 
 // Getting Specific Class
 // app.get('/class/:id', verifyJWT, async (req, res) alternative for verifyJWT
-app.get('/class/:id', async (req, res) => {
+app.get('/classes/:id', async (req, res) => {
     const id = req.params.id;
-    const getSpecificClass = getSpecificData(id, classCollection);
+    const getSpecificClass = getSpecificData(id, classesCollection);
     getSpecificClass
         .then(result => {
             return res.send({
                 success: true,
-                message: "Specific Class Deleted",
-                data: result,
+                message: "Specific Class Found",
+                data: result
             })
         })
         .catch(err => {
@@ -117,9 +123,9 @@ app.get('/class/:id', async (req, res) => {
 
 // Creating new class
 // app.post('/class', async (req, res) alternative for verifyJWT
-app.post('/class', async (req, res) => {
+app.post('/classes', async (req, res) => {
     const data = req.body;
-    const newClass = postData(classCollection, data);
+    const newClass = postData(classesCollection, data);
     newClass
         .then(result => {
             return res.send({
@@ -138,7 +144,7 @@ app.post('/class', async (req, res) => {
 
 // UpdateClass
 // app.put('/class/:id', async (req, res) alternative for verifyJWT
-app.put('/class/:id', async (req, res) => {
+app.put('/classes/:id', async (req, res) => {
     const id = req.params.id;
     const classData = req.body;
     const options = { upsert: true };
@@ -147,7 +153,7 @@ app.put('/class/:id', async (req, res) => {
             name: classData.name
         }
     };
-    const updateClass = updateData(id, updatedClassData, options, classCollection);
+    const updateClass = updateData(id, updatedClassData, options, classesCollection);
     updateClass
         .then(result => {
             return res.send({
@@ -166,9 +172,9 @@ app.put('/class/:id', async (req, res) => {
 
 // Deleting Classes
 // app.delete('/class/:id', async (req, res) alternative for verifyJWT
-app.delete('/class/:id', async (req, res) => {
+app.delete('/classes/:id', async (req, res) => {
     const id = req.params.id;
-    const deleteClass = deleteData(id, classCollection);
+    const deleteClass = deleteData(id, classesCollection);
     deleteClass
         .then(result => {
             return res.send({
@@ -189,6 +195,12 @@ app.delete('/class/:id', async (req, res) => {
 app.get('/', (req, res) => {
     res.send('Quick Edu Live Server is Running!!!');
 });
+
+// 404 Route of Server
+app.all('*', (req, res) => res.send({
+    status: 404,
+    message: `Route Not Found!`
+}));
 
 app.listen(port, () => {
     console.log(`Quick Edu Live Server is Running on PORT : ${port}`);

@@ -1,30 +1,46 @@
 const jwt = require('jsonwebtoken');
 
 // User JWT Token Generate Function
-const generate_user_token = async (user) => {
-    const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
-    // const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
-    return token;
+const user_token = async (email, collection) => {
+    const query = { email: email };
+    console.log(email)
+    const user = await collection.findOne(query);
+    if (user) {
+        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: "1d" })
+        return { accessToken: token };
+    };
+    return { accessToken: "" };
 };
 
-// JWT Verify Function
+
+// User JWT Verify Function
 function verifyJWT(req, res, next) {
-    const authHeader = req.headers.authentication;
+    const authHeader = req.headers.authorization;
     if (!authHeader) {
-        res.send({ message: "unauthorize access" });
-        // res.status(401).res.send({ message: "unauthorize access" });
-        return;
+        return res.status(401).send("unauthorized access");
     };
-    const token = authHeader.split(' ')[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+
+    const token = authHeader.split(" ")[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
         if (err) {
-            res.send({ message: "unauthorize access" });
-            // res.status(401).res.send({ message: "unauthorize access" });
-            return;
-        };
+            return res.status(403).send({ message: "forbidden access" })
+        }
         req.decoded = decoded;
         next();
     });
 };
 
-module.exports = { generate_user_token, verifyJWT };
+// Admin/Teacher JWT Verify Function
+const verifyAdmin = async (req, res, next) => {
+    const decodedEmail = req.decoded.email;
+    const query = { email: decodedEmail };
+    const user = await usersCollection.findOne(query);
+
+    if (user?.role !== "admin") {
+        return res.status(403).send({ message: "forbidden access" })
+    }
+    next();
+};
+
+module.exports = { user_token, verifyJWT, verifyAdmin };
