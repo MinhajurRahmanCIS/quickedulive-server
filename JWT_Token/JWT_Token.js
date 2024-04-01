@@ -6,7 +6,7 @@ const user_token = async (email, collection) => {
     console.log(email)
     const user = await collection.findOne(query);
     if (user) {
-        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: "1d" })
+        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN)
         return { accessToken: token };
     };
     return { accessToken: "" };

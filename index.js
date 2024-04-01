@@ -41,7 +41,7 @@ app.get('/jwt', (req, res) => {
             return res.send({
                 success: true,
                 message: "User Token Generated",
-                data: { accessToken },
+                data: accessToken,
             });
         })
         .catch(err => {
@@ -52,19 +52,131 @@ app.get('/jwt', (req, res) => {
         });
 });
 
-// Class CRUD
+// Users
+// Getting Users 
+
+app.get('/users', async (req, res) => {
+    // Showing Specific Email User 
+    let query = {};
+
+    if (req.query.email) {
+        query = {
+            email: req.query.email
+        };
+    };
+    const getUser = getData(usersCollection, query);
+    getUser
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Class Found!!",
+                data: result,
+            });
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+// Getting Specific Class
+// app.get('/class/:id', verifyJWT, async (req, res) alternative for verifyJWT
+app.get('/users/:id', async (req, res) => {
+    const id = req.params.id;
+    const getSpecificUser = getSpecificData(id, usersCollection);
+    getSpecificUser
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Specific User Found",
+                data: result
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+// Creating new class
+// app.post('/class', async (req, res) alternative for verifyJWT
+app.post('/users', async (req, res) => {
+    const data = req.body;
+    const user = postData(usersCollection, data);
+    user
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "New User Added",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+// UpdateUser
+// app.put('/class/:id', async (req, res) alternative for verifyJWT
+app.put('/users/:id', async (req, res) => {
+    const id = req.params.id;
+    const userData = req.body;
+    const options = { upsert: true };
+    const updatedUserData = {
+        $set: {
+            name: userData.name
+        }
+    };
+    const userClass = updateData(id, updatedUserData, options, usersCollection);
+    userClass
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "User Updated",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+// Deleting Users
+app.delete('/users/:id', async (req, res) => {
+    const id = req.params.id;
+    const deleteUser = deleteData(id, usersCollection);
+    deleteUser
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Users Deleted",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+
+// Classes
 // Getting Classes 
 // app.get('/class', verifyJWT, async (req, res) alternative for verifyJWT
 
 app.get('/classes', async (req, res) => {
-
-    /* verify JWT with email */
-    // const decoded = req.decoded;
-    // if (decoded.email !== req.query.email) {
-    //     res.send({ message: "unauthorize access" });
-    //     // res.status(403).res.send({ message: "unauthorize access" });
-    // };
-
     // Showing Specific Email Classes 
     let query = {};
 
