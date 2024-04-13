@@ -7,7 +7,8 @@ const port = process.env.PORT || 5000;
 //Requiring MongoDB Connection & Collections
 const { dbConnect,
     usersCollection,
-    classesCollection
+    classesCollection,
+    announcementsCollection
 } = require('./DBConnection/DBConnection');
 
 //Requiring CRUD Functions
@@ -58,7 +59,6 @@ app.get('/jwt', (req, res) => {
 app.get('/users', async (req, res) => {
     // Showing Specific Email User 
     let query = {};
-
     if (req.query.email) {
         query = {
             email: req.query.email
@@ -186,15 +186,6 @@ app.get('/classes', async (req, res) => {
         };
     };
 
-    // const search = req.query.search;
-    // if (search) {
-    //     query = {
-    //         $text: {
-    //             $search: search
-    //         }
-    //     };
-    // };
-
     const getClass = getData(classesCollection, query);
     getClass
         .then(result => {
@@ -292,6 +283,61 @@ app.delete('/classes/:id', async (req, res) => {
             return res.send({
                 success: true,
                 message: "Class Deleted",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+
+
+
+// Announcements
+// Getting Announcements 
+// app.get('/announcements', verifyJWT, async (req, res) alternative for verifyJWT
+
+app.get('/announcements', async (req, res) => {
+    // Showing Specific Email Classes 
+    let query = {};
+
+    if (req.query.classId) {
+        query = {
+            classId: req.query.classId
+        };
+    };
+
+    const getAnnouncements = getData(announcementsCollection, query);
+    getAnnouncements
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Announcements Found!!",
+                data: result,
+            });
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+// Creating new Announcements
+// app.post('/announcements', async (req, res) alternative for verifyJWT
+app.post('/announcements', async (req, res) => {
+    const data = req.body;
+    const newAnnouncement = postData(announcementsCollection, data);
+    newAnnouncement
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Announcement Created",
                 data: result,
             })
         })
