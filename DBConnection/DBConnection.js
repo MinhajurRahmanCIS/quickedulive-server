@@ -34,11 +34,13 @@ const QELDB = client.db('quickEduLiveDatabase');
 const classesCollection = QELDB.collection('classes');
 const usersCollection = QELDB.collection('users');
 const announcementsCollection = QELDB.collection('announcements');
+const classworkCollection = QELDB.collection('classwork');
 
 
 module.exports = {
     dbConnect,
     usersCollection,
     classesCollection,
-    announcementsCollection
+    announcementsCollection,
+    classworkCollection
 }

@@ -8,7 +8,8 @@ const port = process.env.PORT || 5000;
 const { dbConnect,
     usersCollection,
     classesCollection,
-    announcementsCollection
+    announcementsCollection,
+    classworkCollection
 } = require('./DBConnection/DBConnection');
 
 //Requiring CRUD Functions
@@ -177,6 +178,12 @@ app.delete('/users/:id', async (req, res) => {
 // app.get('/class', verifyJWT, async (req, res) alternative for verifyJWT
 
 app.get('/classes', async (req, res) => {
+    // const email = req.query.email;
+    // const decodedEmail = req.decoded.email;
+
+    // if (email !== decodedEmail) {
+    //     return res.status(403).send({ message: 'forbidden access' });
+    // };
     // Showing Specific Email Classes 
     let query = {};
 
@@ -304,14 +311,20 @@ app.delete('/classes/:id', async (req, res) => {
 app.get('/announcements', async (req, res) => {
     // Showing Specific Email Classes 
     let query = {};
-
     if (req.query.classId) {
         query = {
             classId: req.query.classId
         };
     };
 
-    const getAnnouncements = getData(announcementsCollection, query);
+    let sortOption = {};
+    if (req.query.sorted) {
+        sortOption['_id'] = parseInt(req.query.sorted); // Sort ascending if sortField is provided
+    } else {
+        sortOption['_id'] = 1; // Sort by _id field ascending if sortField is not provided
+    };
+
+    const getAnnouncements = getData(announcementsCollection, query, sortOption);
     getAnnouncements
         .then(result => {
             return res.send({
@@ -340,6 +353,60 @@ app.post('/announcements', async (req, res) => {
                 message: "Announcement Created",
                 data: result,
             })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+// Creating new classwork
+// app.post('/classwork', async (req, res) alternative for verifyJWT
+app.post('/classwork', async (req, res) => {
+    const data = req.body;
+    const classwork = postData(classworkCollection, data);
+    classwork
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Classwork Created",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+app.get('/classwork', async (req, res) => {
+    // const email = req.query.email;
+    // const decodedEmail = req.decoded.email;
+
+    // if (email !== decodedEmail) {
+    //     return res.status(403).send({ message: 'forbidden access' });
+    // };
+    // Showing Specific Email Classes 
+    let query = {};
+
+    if (req.query.classId) {
+        query = {
+            classId: req.query.classId
+        };
+    };
+
+    const getClasswork = getData(classworkCollection, query);
+    getClasswork
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Class work Found!!",
+                data: result,
+            });
         })
         .catch(err => {
             return res.send({

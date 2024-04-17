@@ -1,8 +1,8 @@
 const { ObjectId } = require("mongodb");
 
 // Get Function
-const getData = async (collection, query) => {
-    const result = await collection.find(query).toArray();
+const getData = async (collection, query, sortOption) => {
+    const result = await collection.find(query).sort(sortOption).toArray();
     return result;
 };
 
