@@ -28,11 +28,62 @@ app.use(express.json());
 //MongoDb Connection
 dbConnect().catch(console.dir + 'MongoDb Connection Error');
 
+//Requiring gemini AI 
+const {
+    GoogleGenerativeAI,
+    HarmCategory,
+    HarmBlockThreshold,
+} = require("@google/generative-ai");
+
+//Select gemini AI Model 
+const MODEL_NAME = "gemini-1.0-pro";
+const API_KEY = process.env.GEMINI_KEY;
+
+const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+
+const generationConfig = {
+    temperature: 0.9,
+    topK: 1,
+    topP: 1,
+    maxOutputTokens: 2048,
+};
+
+const safetySettings = [
+    {
+        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    },
+    {
+        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    },
+    {
+        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    },
+    {
+        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    },
+];
+
+const chat = model.startChat({
+    generationConfig,
+    safetySettings,
+    history: [
+    ],
+});
+
+
+
+
 // Requiring JWT Function to get user_token, verifyJWT user, verifyAdmin
 const { user_token,
     verifyJWT,
     verifyAdmin
 } = require('./JWT_Token/JWT_Token');
+
 
 // JWT user Token generate
 app.get('/jwt', (req, res) => {
@@ -366,21 +417,74 @@ app.post('/announcements', async (req, res) => {
 // app.post('/classwork', async (req, res) alternative for verifyJWT
 app.post('/classwork', async (req, res) => {
     const data = req.body;
-    const classwork = postData(classworkCollection, data);
-    classwork
-        .then(result => {
-            return res.send({
-                success: true,
-                message: "Classwork Created",
-                data: result,
+    console.log(data)
+
+    const subject = data.subject;
+    const quizNo = data.quizNo;
+    const date = data.date;
+    const time = data.duration + " " + data.timeUnit;
+    const totalQuestions = data.totalQuestions;
+    const level = data.level;
+    const topic = data.topic;
+    const questionPattern = 'a), b), c), d)';
+
+    // const prompt =
+    //     `Make ${subject} Question Provide correct answer. Subject: ${subject}. Total Question: ${totalQuestions}. Question Pattern: ${questionPattern}. give it in pure json format. Please stop giving starting ${"```json"} and ${"```"} don't give ${' \n \n'} 
+    //     `
+    //     ;
+
+    const prompt =
+        `Generate ${subject} questions with the topic ${topic} and provide the correct answers. Subject: ${subject}. Total Questions: ${totalQuestions}. Question Pattern: ${questionPattern}. Please provide the response in pure JSON format. Avoid using ${"json"} and ${""} to enclose the JSON.
+        Example:
+        {
+                "Quiz No": ${quizNo}, 
+                    "Date": ${date}, 
+                    "Time": ${time}, 
+                    "Level": ${level}, 
+                    "Topic": ${topic},
+                {
+                    "Question": [
+                        {"_id": "count on sequence",
+                        "question": "?",
+                        "options": ["a)", "b)", "c)", "d)"],
+                        "correct Answer": ""
+                    ]
+                   }
+        }
+        `;
+
+    console.log(prompt)
+
+    try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        console.log(text);
+
+        // Parse the JSON string into an array of objects
+        const textToArray = JSON.parse(text);
+        console.log("Array", textToArray);
+
+        const classwork = postData(classworkCollection, textToArray);
+        classwork
+            .then(result => {
+                return res.send({
+                    success: true,
+                    message: "Classwork Created",
+                    data: result,
+                })
             })
-        })
-        .catch(err => {
-            return res.send({
-                success: false,
-                message: err?.message
-            })
-        });
+            .catch(err => {
+                return res.send({
+                    success: false,
+                    message: err?.message
+                })
+            });
+    } catch (error) {
+        return res.send("Please try again!");
+    }
+
+
 });
 
 app.get('/classwork', async (req, res) => {
