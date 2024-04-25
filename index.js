@@ -419,10 +419,12 @@ app.post('/classwork', async (req, res) => {
     const data = req.body;
     console.log(data)
 
+    const classId = data.classId;
     const subject = data.subject;
     const quizNo = data.quizNo;
     const date = data.date;
-    const time = data.duration + " " + data.timeUnit;
+    const time = data.time;
+    const examDuration = data.duration + " " + data.timeUnit;
     const totalQuestions = data.totalQuestions;
     const level = data.level;
     const topic = data.topic;
@@ -437,17 +439,19 @@ app.post('/classwork', async (req, res) => {
         `Generate ${subject} questions with the topic ${topic} and provide the correct answers. Subject: ${subject}. Total Questions: ${totalQuestions}. Question Pattern: ${questionPattern}. Please provide the response in pure JSON format. Avoid using ${"json"} and ${""} to enclose the JSON.
         Example:
         {
-                "Quiz No": ${quizNo}, 
-                    "Date": ${date}, 
-                    "Time": ${time}, 
-                    "Level": ${level}, 
-                    "Topic": ${topic},
+                "quizNo": ${quizNo},
+                "classId": ${classId},  
+                    "date": ${date}, 
+                    "time": ${time}, 
+                    "examDuration": ${examDuration}, 
+                    "level": ${level}, 
+                    "topic": ${topic},
                 {
-                    "Question": [
+                    "question": [
                         {"_id": "count on sequence",
-                        "question": "?",
+                        "question": "",
                         "options": ["a)", "b)", "c)", "d)"],
-                        "correct Answer": ""
+                        "correctAnswer": ""
                     ]
                    }
         }
@@ -468,6 +472,7 @@ app.post('/classwork', async (req, res) => {
         const classwork = postData(classworkCollection, textToArray);
         classwork
             .then(result => {
+
                 return res.send({
                     success: true,
                     message: "Classwork Created",
@@ -484,7 +489,6 @@ app.post('/classwork', async (req, res) => {
         return res.send("Please try again!");
     }
 
-
 });
 
 app.get('/classwork', async (req, res) => {
@@ -494,30 +498,38 @@ app.get('/classwork', async (req, res) => {
     // if (email !== decodedEmail) {
     //     return res.status(403).send({ message: 'forbidden access' });
     // };
-    // Showing Specific Email Classes 
-    let query = {};
+    
 
-    if (req.query.classId) {
+    if (req.query.classId && req.query.quizNo || req.query.assignmentNo) {
         query = {
-            classId: req.query.classId
+            classId: req.query.classId,
+            $or: []
         };
-    };
 
-    const getClasswork = getData(classworkCollection, query);
-    getClasswork
-        .then(result => {
-            return res.send({
-                success: true,
-                message: "Class work Found!!",
-                data: result,
-            });
-        })
-        .catch(err => {
-            return res.send({
-                success: false,
-                message: err?.message
+        if (req.query.quizNo) {
+            query.$or.push({ "quizNo": { $exists: true } });
+        }
+        else if (req.query.assignmentNo) {
+            query.$or.push({ "assignmentNo": { $exists: true } });
+        };
+
+        const getClasswork = getData(classworkCollection, query);
+        getClasswork
+            .then(result => {
+                console.log(result)
+                return res.send({
+                    success: true,
+                    message: "Class work Found!!",
+                    data: result,
+                });
             })
-        });
+            .catch(err => {
+                return res.send({
+                    success: false,
+                    message: err?.message
+                })
+            });
+    };
 });
 
 //Root Directory of Server
