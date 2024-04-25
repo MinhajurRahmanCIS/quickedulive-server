@@ -417,7 +417,7 @@ app.post('/announcements', async (req, res) => {
 // app.post('/classwork', async (req, res) alternative for verifyJWT
 app.post('/classwork', async (req, res) => {
     const data = req.body;
-    console.log(data)
+    console.log("req data", data)
 
     const classId = data.classId;
     const subject = data.subject;
@@ -447,7 +447,7 @@ app.post('/classwork', async (req, res) => {
                     "level": ${level}, 
                     "topic": ${topic},
                 {
-                    "question": [
+                    "questions": [
                         {"_id": "count on sequence",
                         "question": "",
                         "options": ["a)", "b)", "c)", "d)"],
@@ -457,38 +457,39 @@ app.post('/classwork', async (req, res) => {
         }
         `;
 
-    console.log(prompt)
+    // console.log(prompt)
 
-    try {
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-        console.log(text);
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    // console.log(text);
 
-        // Parse the JSON string into an array of objects
-        const textToArray = JSON.parse(text);
-        console.log("Array", textToArray);
+    // Parse the JSON string into an array of objects
+    const textToArray = JSON.parse(text);
 
-        const classwork = postData(classworkCollection, textToArray);
-        classwork
-            .then(result => {
+    console.log("Response", textToArray);
 
-                return res.send({
-                    success: true,
-                    message: "Classwork Created",
-                    data: result,
-                })
+    if (!textToArray.quizNo || !textToArray.classId || !textToArray.date || !textToArray.time || !textToArray.examDuration || !textToArray.level || !textToArray.topic) {
+        return res.send("Something Went wrong. Please Try Again")
+    };
+
+
+    const classwork = postData(classworkCollection, textToArray);
+    classwork
+        .then(result => {
+
+            return res.send({
+                success: true,
+                message: "Classwork Created",
+                data: result,
             })
-            .catch(err => {
-                return res.send({
-                    success: false,
-                    message: err?.message
-                })
-            });
-    } catch (error) {
-        return res.send("Please try again!");
-    }
-
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
 });
 
 app.get('/classwork', async (req, res) => {
@@ -498,7 +499,7 @@ app.get('/classwork', async (req, res) => {
     // if (email !== decodedEmail) {
     //     return res.status(403).send({ message: 'forbidden access' });
     // };
-    
+
 
     if (req.query.classId && req.query.quizNo || req.query.assignmentNo) {
         query = {
@@ -516,7 +517,6 @@ app.get('/classwork', async (req, res) => {
         const getClasswork = getData(classworkCollection, query);
         getClasswork
             .then(result => {
-                console.log(result)
                 return res.send({
                     success: true,
                     message: "Class work Found!!",
@@ -530,6 +530,27 @@ app.get('/classwork', async (req, res) => {
                 })
             });
     };
+});
+
+// Getting Specific classwork
+// app.get('/class/:id', verifyJWT, async (req, res) alternative for verifyJWT
+app.get('/classwork/:id', async (req, res) => {
+    const id = req.params.id;
+    const getSpecificClasswork = getSpecificData(id, classworkCollection);
+    getSpecificClasswork
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Specific Class work Found",
+                data: result
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
 });
 
 //Root Directory of Server
