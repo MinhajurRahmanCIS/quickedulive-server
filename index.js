@@ -430,14 +430,21 @@ app.post('/classwork', async (req, res) => {
     const topic = data.topic;
     const questionPattern = 'a), b), c), d)';
 
+    // Assignment
+    const assignmentNo = data.assignmentNo;
+    const demo = data.demo;
+    const description = data.description;
+
     // const prompt =
     //     `Make ${subject} Question Provide correct answer. Subject: ${subject}. Total Question: ${totalQuestions}. Question Pattern: ${questionPattern}. give it in pure json format. Please stop giving starting ${"```json"} and ${"```"} don't give ${' \n \n'} 
     //     `
     //     ;
+    let prompt;
 
-    const prompt =
-        `Generate ${subject} questions with the topic ${topic} and provide the correct answers. Subject: ${subject}. Total Questions: ${totalQuestions}. Question Pattern: ${questionPattern}. Please provide the response in pure JSON format. Avoid using ${"json"} and ${""} to enclose the JSON.
-        Example:
+    if (quizNo) {
+        prompt =
+            `Generate ${subject} questions with the topic ${topic} and provide the correct answers. Subject: ${subject}. Total Questions: ${totalQuestions}. Question Pattern: ${questionPattern}. Please provide the response in pure JSON format. Avoid using ${"json"} and ${""} to enclose the JSON.
+            Carefully follow the Example:
         {
                 "quizNo": ${quizNo},
                 "classId": ${classId},  
@@ -456,8 +463,28 @@ app.post('/classwork', async (req, res) => {
                    }
         }
         `;
+    }
+    else {
+        prompt = `Generate a new scenario and total questions ${totalQuestions} based on this demo: ${demo}. Additional Info: ${description}. Please provide the response in pure JSON format. Avoid using ${"json"} and ${""} to enclose the JSON. Carefully follow the example:
 
-    // console.log(prompt)
+    {
+            "assignmentNo": ${assignmentNo},
+            "classId": ${classId},  
+                "date": ${date}, 
+                "time": ${time}, 
+                "due": ${examDuration}
+            {
+                "questions": [
+                    {"_id": "count on sequence",
+                    "scenario": ""
+                    "question": "${totalQuestions}"
+                ]
+               }
+    }
+    `;
+    }
+
+    console.log(prompt)
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -465,11 +492,21 @@ app.post('/classwork', async (req, res) => {
     // console.log(text);
 
     // Parse the JSON string into an array of objects
-    const textToArray = JSON.parse(text);
+    // const textToArray = JSON.parse(text);
+
+    let textToArray; // Declare textToArray outside of the try-catch block
+
+    try {
+        textToArray = JSON.parse(text);
+        // Continue with your code here if parsing is successful
+        // For example, you can use textToArray for further processing
+    } catch (error) {
+        res.send("Something Went wrong. Please Try Again");
+    }
 
     console.log("Response", textToArray);
 
-    if (!textToArray.quizNo || !textToArray.classId || !textToArray.date || !textToArray.time || !textToArray.examDuration || !textToArray.level || !textToArray.topic) {
+    if (!textToArray?.quizNo || !textToArray?.classId || !textToArray?.date || !textToArray?.time || !textToArray?.examDuration || !textToArray?.level || !textToArray?.topic || classId != textToArray?.classId) {
         return res.send("Something Went wrong. Please Try Again")
     };
 
