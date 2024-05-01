@@ -519,8 +519,6 @@ app.post('/classwork', async (req, res) => {
         return res.send("Something Went wrong. Please Try Again");
     }
     
-
-
     const classwork = postData(classworkCollection, textToArray);
     classwork
         .then(result => {
