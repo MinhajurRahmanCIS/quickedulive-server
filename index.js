@@ -35,7 +35,7 @@ const {
     HarmBlockThreshold,
 } = require("@google/generative-ai");
 
-//Select gemini AI Model 
+//Selected gemini AI Model and configuration 
 const MODEL_NAME = "gemini-1.0-pro";
 const API_KEY = process.env.GEMINI_KEY;
 
@@ -413,6 +413,29 @@ app.post('/announcements', async (req, res) => {
         });
 });
 
+
+// Deleting Announcements
+// app.delete('/classwork/:id', async (req, res) alternative for verifyJWT
+app.delete('/announcements/:id', async (req, res) => {
+    const id = req.params.id;
+    const deleteAnnouncement = deleteData(id, announcementsCollection);
+    deleteAnnouncement
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Announcements Deleted",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+
 // Creating new classwork
 // app.post('/classwork', async (req, res) alternative for verifyJWT
 app.post('/classwork', async (req, res) => {
@@ -511,14 +534,13 @@ app.post('/classwork', async (req, res) => {
 
     if (quizNo && (!textToArray?.quizNo || !textToArray?.classId || !textToArray?.date || !textToArray?.time || !textToArray?.examDuration || !textToArray?.level || !textToArray?.topic || classId != textToArray?.classId)) {
         return res.send("Something Went wrong. Please Try Again");
-    }
-    
+    };
 
     console.log(assignmentNo)
 
     if (assignmentNo && (!textToArray?.assignmentNo || !textToArray?.classId || !textToArray?.date || !textToArray?.time || !textToArray?.level || !textToArray?.scenario || !textToArray?.topic || classId != textToArray?.classId)) {
         return res.send("Something Went wrong. Please Try Again");
-    }
+    };
     
     const classwork = postData(classworkCollection, textToArray);
     classwork
@@ -599,6 +621,30 @@ app.get('/classwork/:id', async (req, res) => {
             })
         });
 });
+
+
+// Deleting Quiz
+// app.delete('/class/:id', async (req, res) alternative for verifyJWT
+app.delete('/classwork/:id', async (req, res) => {
+    const id = req.params.id;
+    const getSpecificClasswork = deleteData(id, classworkCollection);
+    getSpecificClasswork
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Quiz Deleted",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+
 
 //Root Directory of Server
 app.get('/', (req, res) => {
