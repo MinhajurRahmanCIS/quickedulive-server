@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 require('dotenv').config();
+const T = require("tesseract.js");
 const port = process.env.PORT || 5000;
 
 //Requiring MongoDB Connection & Collections
@@ -9,7 +10,8 @@ const { dbConnect,
     usersCollection,
     classesCollection,
     announcementsCollection,
-    classworkCollection
+    classworkCollection,
+    checkingCollection
 } = require('./DBConnection/DBConnection');
 
 //Requiring CRUD Functions
@@ -75,6 +77,26 @@ const chat = model.startChat({
     ],
 });
 
+// For text-only input, use the gemini-pro model
+async function checkPaper(question, answer) {
+    // console.log(studentName, studentId, subject)
+    const prompt = `You role is University Teacher. Now here is question : ${question}. Read the question. Here is student answer of the questions ${answer}. Now give the student proper mark based on question.Please provide the response in pure JSON format. Avoid using ${"json"} and ${""} to enclose the JSON.
+    Carefully follow the Example:
+        "question": [
+            {"_id": "count on sequence",
+            "question": "1/2/3",
+            "totalMarks": "",
+            "marksGet": "",
+        ]
+       }      
+        `
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    // console.log(text);
+    return text;
+};
 
 
 
@@ -541,7 +563,7 @@ app.post('/classwork', async (req, res) => {
     if (assignmentNo && (!textToArray?.assignmentNo || !textToArray?.classId || !textToArray?.date || !textToArray?.time || !textToArray?.level || !textToArray?.scenario || !textToArray?.topic || classId != textToArray?.classId)) {
         return res.send("Something Went wrong. Please Try Again");
     };
-    
+
     const classwork = postData(classworkCollection, textToArray);
     classwork
         .then(result => {
@@ -643,6 +665,131 @@ app.delete('/classwork/:id', async (req, res) => {
             })
         });
 });
+
+//  The `punycode` module is deprecated. shows in command
+// Checking paper
+app.post('/check', async (req, res) => {
+    const data = req.body;
+    console.log(data);
+    // const studentName = data.studentName;
+    // const studentId = data.studentId;
+    // const subject = data.subject;
+    const question = data.questionImg;
+    const answer = data.answerImg;
+
+    let extractedQuestionText = "";
+    let extractedAnswerText = "";
+
+
+
+    T.recognize(question, 'eng', { logger: e => console.log(e) })
+        .then(out => {
+            extractedQuestionText = out.data.text;
+            T.recognize(answer, 'eng', { logger: e => console.log(e) })
+                .then(out => {
+                    extractedAnswerText = out.data.text;;
+                    const result = checkPaper(extractedQuestionText, extractedAnswerText);
+                    // const result = checkPaper(extractedQuestionText, extractedAnswerText, studentName, studentId, subject);
+                    result
+                        .then(text => {
+                            console.log(text);
+                            let textToArray; // Declare textToArray outside of the try-catch block
+
+                            try {
+                                textToArray = JSON.parse(text);  // Continue here if parsing is successful
+                            } catch (error) {
+                                res.send("Something Went wrong. Please Try Again");
+                            }
+                            const newChecking = postData(checkingCollection, textToArray);
+                            newChecking
+                                .then(result => {
+                                    return res.send({
+                                        success: true,
+                                        message: "Checking",
+                                        data: result,
+                                    })
+                                })
+                                .catch(err => {
+                                    return res.send({
+                                        success: false,
+                                        message: err?.message
+                                    })
+                                });
+                        })
+                        .catch(err => {
+                            console.error(err);
+                        })
+                })
+                .catch(err => {
+                    console.error(err);
+                });
+        })
+        .catch(err => {
+            console.error(err);
+        });
+
+});
+
+app.get('/check', async (req, res) => {
+    let query = {};
+    const getCheck= getData(checkingCollection, query);
+    getCheck
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Paper Found!!",
+                data: result,
+            });
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+app.get('/check/:id', async (req, res) => {
+    const id = req.params.id;
+    const getSpecificPaper = getSpecificData(id, checkingCollection);
+    getSpecificPaper
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Paper Found",
+                data: result
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+
+// Deleting Quiz
+// app.delete('/class/:id', async (req, res) alternative for verifyJWT
+app.delete('/check/:id', async (req, res) => {
+    const id = req.params.id;
+    const getSpecificPaper = deleteData(id, checkingCollection);
+    getSpecificPaper
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Paper Deleted",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
 
 
 

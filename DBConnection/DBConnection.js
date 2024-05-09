@@ -35,6 +35,7 @@ const classesCollection = QELDB.collection('classes');
 const usersCollection = QELDB.collection('users');
 const announcementsCollection = QELDB.collection('announcements');
 const classworkCollection = QELDB.collection('classwork');
+const checkingCollection = QELDB.collection('checking');
 
 
 module.exports = {
@@ -42,5 +43,6 @@ module.exports = {
     usersCollection,
     classesCollection,
     announcementsCollection,
-    classworkCollection
+    classworkCollection,
+    checkingCollection
 }
