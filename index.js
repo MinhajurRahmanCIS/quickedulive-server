@@ -457,6 +457,43 @@ app.delete('/announcements/:id', async (req, res) => {
         });
 });
 
+// Comments
+// Getting Comments 
+// app.get('/announcements', verifyJWT, async (req, res) alternative for verifyJWT
+
+app.get('/comments', async (req, res) => {
+    // Showing Specific Email Classes 
+    let query = {};
+    if (req.query.announcementId) {
+        query = {
+            announcementId: req.query.announcementId
+        };
+    };
+
+    let sortOption = {};
+    if (req.query.sorted) {
+        sortOption['_id'] = parseInt(req.query.sorted); // Sort ascending if sortField is provided
+    } else {
+        sortOption['_id'] = 1; // Sort by _id field ascending if sortField is not provided
+    };
+
+    const getAnnouncements = getData(announcementsCollection, query, sortOption);
+    getAnnouncements
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Announcements Found!!",
+                data: result,
+            });
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
 
 // Creating new classwork
 // app.post('/classwork', async (req, res) alternative for verifyJWT
@@ -685,7 +722,9 @@ app.post('/check', async (req, res) => {
     T.recognize(question, 'eng', { logger: e => console.log(e) })
         .then(out => {
             extractedQuestionText = out.data.text;
-            T.recognize(answer, 'eng', { logger: e => console.log(e) })
+            T.recognize(answer, 'eng', { 
+                logger: e => console.log(e) 
+            })
                 .then(out => {
                     extractedAnswerText = out.data.text;;
                     const result = checkPaper(extractedQuestionText, extractedAnswerText);
