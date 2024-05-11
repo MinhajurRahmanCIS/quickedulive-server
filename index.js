@@ -19,7 +19,8 @@ const { getData,
     getSpecificData,
     postData,
     updateData,
-    deleteData
+    deleteData,
+    getAUser
 } = require('./CRUD/CRUD');
 
 
@@ -155,18 +156,73 @@ app.get('/users', async (req, res) => {
         });
 });
 
+app.get('/users/:email', async (req, res) => {
+    const email = req.params.email;
+    const query = { email }
+    // const user = await usersCollection.findOne(query);
+    // console.log(user)
+    // res.send(user);
+
+    const getUser = getAUser(usersCollection, query);
+    getUser
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Class Found!!",
+                data: result,
+            });
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+
 app.get('/users/teacher/:email', async (req, res) => {
     const email = req.params.email;
     const query = { email }
-    const user = await usersCollection.findOne(query);
-    res.send({ isTeacher: user?.role === "Teacher"});
+    // const user = await usersCollection.findOne(query);
+    // res.send({ isTeacher: user?.role === "Teacher"});
+    const getUser = getAUser(usersCollection, query);
+    getUser
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Teacher!!",
+                data: { isTeacher: result?.role === "Teacher" },
+            });
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
 })
 
 app.get('/users/premium/:email', async (req, res) => {
     const email = req.params.email;
     const query = { email }
-    const user = await usersCollection.findOne(query);
-    res.send({ isPremium: user?.account === "Premium" });
+    // const user = await usersCollection.findOne(query);
+    // res.send({ isPremium: user?.account === "Premium" });
+    const getUser = getAUser(usersCollection, query);
+    getUser
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Premium!!",
+                data: { isPremium: result?.account === "Premium" },
+            });
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
 })
 
 // Getting Specific Class
@@ -219,7 +275,7 @@ app.put('/users/:id', async (req, res) => {
     const options = { upsert: true };
     const updatedUserData = {
         $set: {
-            name: userData.name
+            role: userData.role
         }
     };
     const userClass = updateData(id, updatedUserData, options, usersCollection);
@@ -809,7 +865,7 @@ app.get('/check/:id', async (req, res) => {
         .then(result => {
             return res.send({
                 success: true,
-                message: "Paper Found",
+                message: "Specific Paper Found",
                 data: result
             })
         })

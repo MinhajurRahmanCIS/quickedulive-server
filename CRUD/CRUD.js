@@ -33,10 +33,17 @@ const deleteData = async (id, collection) => {
     return result;
 };
 
+// Get a User
+const getAUser = async (collection, query) => {
+    const result = await collection.findOne(query);
+    return result;
+}; 
+
 module.exports = {
     getData,
     getSpecificData,
     postData,
     updateData,
-    deleteData
+    deleteData,
+    getAUser
 };
