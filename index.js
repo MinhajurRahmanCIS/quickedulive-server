@@ -155,6 +155,20 @@ app.get('/users', async (req, res) => {
         });
 });
 
+app.get('/users/teacher/:email', async (req, res) => {
+    const email = req.params.email;
+    const query = { email }
+    const user = await usersCollection.findOne(query);
+    res.send({ isTeacher: user?.role === "Teacher"});
+})
+
+app.get('/users/premium/:email', async (req, res) => {
+    const email = req.params.email;
+    const query = { email }
+    const user = await usersCollection.findOne(query);
+    res.send({ isPremium: user?.account === "Premium" });
+})
+
 // Getting Specific Class
 // app.get('/class/:id', verifyJWT, async (req, res) alternative for verifyJWT
 app.get('/users/:id', async (req, res) => {
@@ -722,8 +736,8 @@ app.post('/check', async (req, res) => {
     T.recognize(question, 'eng', { logger: e => console.log(e) })
         .then(out => {
             extractedQuestionText = out.data.text;
-            T.recognize(answer, 'eng', { 
-                logger: e => console.log(e) 
+            T.recognize(answer, 'eng', {
+                logger: e => console.log(e)
             })
                 .then(out => {
                     extractedAnswerText = out.data.text;;
@@ -771,7 +785,7 @@ app.post('/check', async (req, res) => {
 
 app.get('/check', async (req, res) => {
     let query = {};
-    const getCheck= getData(checkingCollection, query);
+    const getCheck = getData(checkingCollection, query);
     getCheck
         .then(result => {
             return res.send({
