@@ -180,7 +180,7 @@ app.get('/users/:email', async (req, res) => {
         });
 });
 
-
+// Getting User Role
 app.get('/users/teacher/:email', async (req, res) => {
     const email = req.params.email;
     const query = { email }
@@ -900,6 +900,32 @@ app.delete('/check/:id', async (req, res) => {
 });
 
 
+// Update Account
+// app.put('/payment/:id', async (req, res) alternative for verifyJWT
+app.put('/payment/:id', async (req, res) => {
+    const id = req.params.id;
+    const options = { upsert: true };
+    const updatedUserData = {
+        $set: {
+            account: "Premium"
+        }
+    };
+    const userClass = updateData(id, updatedUserData, options, usersCollection);
+    userClass
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "User Updated",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
 
 
 //Root Directory of Server
