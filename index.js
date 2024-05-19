@@ -11,7 +11,8 @@ const { dbConnect,
     classesCollection,
     announcementsCollection,
     classworkCollection,
-    checkingCollection
+    checkingCollection,
+    enrollmentCollection
 } = require('./DBConnection/DBConnection');
 
 //Requiring CRUD Functions
@@ -444,8 +445,51 @@ app.delete('/classes/:id', async (req, res) => {
         });
 });
 
+// Enroll Student
+// app.post('/class', async (req, res) alternative for verifyJWT
+app.post('/enrollments', async (req, res) => {
+    const data = req.body;
+    const enrollmentKey = data.classCode;
+    const studentEmail = data.studentEmail;
+   
+    const classInfo = await classesCollection.findOne(enrollmentKey);
+    console.log(classInfo)
+    if (classInfo) {
+        const query = { studentEmail, classId: classInfo._id };
+        const existingEnrollment = await enrollmentCollection.findOne(query);
 
+        if (existingEnrollment) {
+            console.log(existingEnrollment)
+            return {
+                success: false,
+                message: 'Student already enrolled in this course.'
+            };
+        };
+        console.log(existingEnrollment);
 
+        const enroll = postData(enrollmentCollection, query);
+        enroll
+            .then(result => {
+                return res.send({
+                    success: true,
+                    message: "Student Enrollment Successfully",
+                    data: result,
+                })
+            })
+            .catch(err => {
+                return res.send({
+                    success: false,
+                    message: err?.message
+                })
+            });
+    };
+
+    return res.send({
+        success: false,
+        message: err?.message || "Class Do not Exits!"
+    })
+
+});
 
 // Announcements
 // Getting Announcements 
