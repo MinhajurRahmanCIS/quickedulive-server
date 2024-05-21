@@ -451,21 +451,18 @@ app.post('/enrollments', async (req, res) => {
     const data = req.body;
     const enrollmentKey = data.classCode;
     const studentEmail = data.studentEmail;
-   
-    const classInfo = await classesCollection.findOne(enrollmentKey);
-    console.log(classInfo)
+
+    const classInfo = await classesCollection.findOne({ classCode: enrollmentKey });
     if (classInfo) {
         const query = { studentEmail, classId: classInfo._id };
         const existingEnrollment = await enrollmentCollection.findOne(query);
 
         if (existingEnrollment) {
-            console.log(existingEnrollment)
-            return {
+            return res.send({
                 success: false,
-                message: 'Student already enrolled in this course.'
-            };
+                alreadyEnrolledMessage: "Already enrolled in class!"
+            })
         };
-        console.log(existingEnrollment);
 
         const enroll = postData(enrollmentCollection, query);
         enroll
@@ -476,19 +473,19 @@ app.post('/enrollments', async (req, res) => {
                     data: result,
                 })
             })
-            .catch(err => {
+            .catch(error => {
                 return res.send({
                     success: false,
-                    message: err?.message
+                    message: error?.message
                 })
             });
+    }
+    else {
+        return res.send({
+            success: false,
+            noClassMessage: "Class not exits"
+        })
     };
-
-    return res.send({
-        success: false,
-        message: err?.message || "Class Do not Exits!"
-    })
-
 });
 
 // Announcements
