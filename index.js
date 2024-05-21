@@ -107,6 +107,7 @@ const { user_token,
     verifyJWT,
     verifyAdmin
 } = require('./JWT_Token/JWT_Token');
+const { ObjectId } = require('mongodb');
 
 
 // JWT user Token generate
@@ -546,6 +547,59 @@ app.delete('/enrollments/:id', async (req, res) => {
             })
         });
 });
+
+// Enrollment People
+// Getting Classes 
+// app.get('/class', verifyJWT, async (req, res) alternative for verifyJWT
+
+app.get('/enrollmentPeople', async (req, res) => {
+    let query = {};
+    if (req.query.classId) {
+        query.classId = new ObjectId(req.query.classId);
+    }
+
+    const enrollments = await enrollmentCollection.find(query).toArray();
+
+    const userDetailsPromises = enrollments.map(enrollment =>
+        usersCollection.findOne({ email: enrollment.email })
+    );
+
+    const userDetails = await Promise.all(userDetailsPromises);
+    res.send({
+        success: true,
+        message: "People Found!!",
+        data: userDetails,
+    });
+});
+
+
+// Deleting Enrollment People
+// app.delete('/class/:id', async (req, res) alternative for verifyJWT
+app.delete('/enrollmentPeople/:email', async (req, res) => {
+    const email = req.params.email;
+    const remove = await enrollmentCollection.deleteOne({ email: email });
+    res.send({
+        success: true,
+        message: "Student Remove",
+        data: remove,
+    });
+    // const deleteClass = deleteData(id, classesCollection);
+    // deleteClass
+    //     .then(result => {
+    //         return res.send({
+    //             success: true,
+    //             message: "Class Deleted",
+    //             data: result,
+    //         })
+    //     })
+    //     .catch(err => {
+    //         return res.send({
+    //             success: false,
+    //             message: err?.message
+    //         })
+    //     });
+});
+
 
 
 // Announcements
