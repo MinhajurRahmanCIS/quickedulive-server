@@ -450,17 +450,17 @@ app.delete('/classes/:id', async (req, res) => {
 app.post('/enrollments', async (req, res) => {
     const data = req.body;
     const enrollmentKey = data.classCode;
-    const studentEmail = data.studentEmail;
+    const email = data.studentEmail;
 
     const classInfo = await classesCollection.findOne({ classCode: enrollmentKey });
     if (classInfo) {
-        const query = { studentEmail, classId: classInfo._id };
+        const query = { email, classId: classInfo._id };
         const existingEnrollment = await enrollmentCollection.findOne(query);
 
         if (existingEnrollment) {
             return res.send({
                 success: false,
-                alreadyEnrolledMessage: "Already enrolled in class!"
+                alreadyEnrolledMessage: "Already enrolled!"
             })
         };
 
@@ -487,6 +487,66 @@ app.post('/enrollments', async (req, res) => {
         })
     };
 });
+
+
+app.get('/enrollments', async (req, res) => {
+    let query = {};
+
+    if (req.query.email) {
+        query = {
+            email: req.query.email
+        };
+    };
+
+    // Fetch enrollment data
+    getData(enrollmentCollection, query)
+        .then(async enrollmentData => {
+            // Extract classIds from the enrollment data
+            const classIds = enrollmentData.map(enrollment => enrollment.classId);
+
+            // Fetch class information using classIds
+            const classDataPromises = classIds.map(classId => getData(classesCollection, { _id: classId }));
+            const classDataArray = await Promise.all(classDataPromises);
+            // Combine enrollment data with class information
+            const combinedData = enrollmentData.map((enrollment_1, index) => ({
+                ...enrollment_1,
+                classInfo: classDataArray[index]
+            }));
+            // Send the response with combined data
+            res.send({
+                success: true,
+                message: "Enrollment and Class Data Found!!",
+                data: combinedData,
+            });
+        })
+        .catch(err => {
+            res.send({
+                success: false,
+                message: err?.message || "An error occurred while fetching data"
+            });
+        });
+});
+
+
+app.delete('/enrollments/:id', async (req, res) => {
+    const id = req.params.id;
+    const deleteEnrollClass = deleteData(id, enrollmentCollection);
+    deleteEnrollClass
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Enroll Class Deleted",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
 
 // Announcements
 // Getting Announcements 
@@ -617,6 +677,7 @@ app.post('/classwork', async (req, res) => {
     const quizNo = data.quizNo;
     const date = data.date;
     const time = data.time;
+    // const time = data.time + data.timePeriod;
     const examDuration = data.duration + " " + data.timeUnit;
     const totalQuestions = data.totalQuestions;
     const level = data.level;
