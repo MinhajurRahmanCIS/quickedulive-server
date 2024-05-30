@@ -12,7 +12,8 @@ const { dbConnect,
     announcementsCollection,
     classworkCollection,
     checkingCollection,
-    enrollmentCollection
+    enrollmentCollection,
+    submissionCollection
 } = require('./DBConnection/DBConnection');
 
 //Requiring CRUD Functions
@@ -598,6 +599,37 @@ app.delete('/enrollmentPeople/:email', async (req, res) => {
     //             message: err?.message
     //         })
     //     });
+});
+
+
+
+app.get('/checkSubmission', async (req, res) => {
+    const studentEmail = req.query.email;
+    const checkSubmissions = await submissionCollection.find({ userEmail: studentEmail }).toArray();
+    res.send(checkSubmissions);
+});
+
+
+
+// Creating Submission
+// app.post('/class', async (req, res) alternative for verifyJWT
+app.post('/submission', async (req, res) => {
+    const data = req.body;
+    const submission = postData(submissionCollection, data);
+    submission
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Submission Done!",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
 });
 
 
