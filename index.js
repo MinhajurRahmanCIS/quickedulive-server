@@ -926,7 +926,7 @@ app.post('/classwork', async (req, res) => {
                         {"_id": "count on sequence",
                         "question": "",
                         "options": ["a)", "b)", "c)", "d)"],
-                        "correctAnswer": "a)/b)/c)/d) The answer"
+                        "correctAnswer": "a)/b)/c)/d) The full answer"
                     ]
                    }
         }
