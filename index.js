@@ -610,6 +610,17 @@ app.get('/checkSubmission', async (req, res) => {
 });
 
 
+app.get('/submission', async (req, res) => {
+    const studentEmail = req.query.email;
+    const qId = req.query.qId;
+    const result = await submissionCollection.findOne({ userEmail: studentEmail, quizId: qId });
+    res.send({
+        success: true,
+        message: "Result!",
+        data: result,
+    })
+});
+
 
 // Creating Submission
 // app.post('/class', async (req, res) alternative for verifyJWT
@@ -631,6 +642,7 @@ app.post('/submission', async (req, res) => {
             })
         });
 });
+
 
 
 
