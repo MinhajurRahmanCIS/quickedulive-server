@@ -641,6 +641,44 @@ app.get('/viewSubmission/:id', async (req, res) => {
     }
 });
 
+app.get('/viewAssignmentSubmission/:id', async (req, res) => {
+    try {
+        const assignmentId = req.params.id;
+
+        // Fetch submissions for the given quiz ID
+        const checkSubmissions = await submissionCollection.find({ assignmentId: assignmentId }).toArray();
+
+        // mapping submitted users
+        const userEmails = [...new Set(checkSubmissions.map(submission => submission.userEmail))];
+
+        // Fetch user details for each submitted user email
+        const userDetails = await usersCollection.find({ email: { $in: userEmails } }).toArray();
+        const userMap = {};
+        userDetails.forEach(user => {
+            userMap[user.email] = { name: user.name, image: user.image };
+        });
+
+        // adding user Name and user Picture details with submissions
+        const viewSubmission = checkSubmissions.map(submission => ({
+            ...submission,
+            userName: userMap[submission.userEmail]?.name,
+            userPicture: userMap[submission.userEmail]?.image
+        }));
+
+        // Send the modified response
+        res.send({
+            success: true,
+            message: "View Submissions",
+            data: viewSubmission
+        });
+    } catch (error) {
+        res.send({
+            success: false,
+            message: "Error in View Submissions"
+        });
+    }
+});
+
 
 app.get('/checkSubmission', async (req, res) => {
     const studentEmail = req.query.email;
