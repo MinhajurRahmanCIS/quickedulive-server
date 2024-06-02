@@ -620,26 +620,62 @@ app.get('/viewSubmission/:id', async (req, res) => {
             userMap[user.email] = { name: user.name, image: user.image };
         });
 
-        // Merge user details with submissions
-        const submissionsWithUserDetails = checkSubmissions.map(submission => ({
+        // adding user Name and user Picture details with submissions
+        const viewSubmission = checkSubmissions.map(submission => ({
             ...submission,
             userName: userMap[submission.userEmail]?.name,
             userPicture: userMap[submission.userEmail]?.image
         }));
 
         // Send the modified response
-        res.send(submissionsWithUserDetails);
+        res.send({
+            success: true,
+            message: "View Submissions",
+            data: viewSubmission
+        });
     } catch (error) {
-        res.send('An error occurred while fetching the submissions');
+        res.send({
+            success: false,
+            message: "Error in View Submissions"
+        });
     }
 });
 
 
 app.get('/checkSubmission', async (req, res) => {
     const studentEmail = req.query.email;
-    const checkSubmissions = await submissionCollection.find({ userEmail: studentEmail }).toArray();
-    res.send(checkSubmissions);
+    const quiz = req.query.quizNo; 
+    const assignment = req.query.assignmentNo; 
+    console.log(assignment)
+    let query = {
+        userEmail: studentEmail,
+        $or: []
+    };
+
+    if (req.query.quizNo) {
+        query.$or.push({ quizId: { $exists: true } });
+    }
+
+    if (req.query.assignment) {
+        query.$or.push({ assignmentId: { $exists: true } });
+    }
+
+    try {
+        const checkSubmissions = await submissionCollection.find(query).toArray();
+        res.send({
+            success: true,
+            message: "Submissions",
+            data: checkSubmissions
+        });
+    } catch (error) {
+        res.send({
+            success: false,
+            message: "An error occurred while fetching submissions",
+            error: error.message
+        });
+    }
 });
+
 
 
 app.get('/submission', async (req, res) => {
