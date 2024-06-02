@@ -644,19 +644,18 @@ app.get('/viewSubmission/:id', async (req, res) => {
 
 app.get('/checkSubmission', async (req, res) => {
     const studentEmail = req.query.email;
-    const quiz = req.query.quizNo; 
-    const assignment = req.query.assignmentNo; 
-    console.log(assignment)
+    const quiz = req.query.quiz; 
+    const assignment = req.query.assignment;
     let query = {
         userEmail: studentEmail,
         $or: []
     };
 
-    if (req.query.quizNo) {
+    if (quiz) {
         query.$or.push({ quizId: { $exists: true } });
     }
 
-    if (req.query.assignment) {
+    if (assignment) {
         query.$or.push({ assignmentId: { $exists: true } });
     }
 
@@ -689,6 +688,36 @@ app.get('/submission', async (req, res) => {
     })
 });
 
+app.delete('/submission/:id', async (req, res) => {
+    const id = req.params.id;
+    const deleteSubmission = deleteData(id, submissionCollection);
+    deleteSubmission
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Submission Deleted",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
+app.get('/assignmentSubmission', async (req, res) => {
+    const studentEmail = req.query.email;
+    const asgId = req.query.qId;
+    const result = await submissionCollection.findOne({ userEmail: studentEmail, quizId: qId });
+    res.send({
+        success: true,
+        message: "Result!",
+        data: result,
+    })
+});
+
 
 // Creating Submission
 // app.post('/class', async (req, res) alternative for verifyJWT
@@ -710,11 +739,6 @@ app.post('/submission', async (req, res) => {
             })
         });
 });
-
-
-
-
-
 
 
 // Announcements
