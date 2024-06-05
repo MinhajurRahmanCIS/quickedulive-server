@@ -13,7 +13,9 @@ const { dbConnect,
     classworkCollection,
     checkingCollection,
     enrollmentCollection,
-    submissionCollection
+    submissionCollection,
+    feedbackCollection,
+    reportCollection
 } = require('./DBConnection/DBConnection');
 
 //Requiring CRUD Functions
@@ -274,12 +276,10 @@ app.post('/users', async (req, res) => {
 // app.put('/class/:id', async (req, res) alternative for verifyJWT
 app.put('/users/:id', async (req, res) => {
     const id = req.params.id;
-    const userData = req.body;
-    const options = { upsert: true };
+    const updatedData = req.body;
+    const options = {};
     const updatedUserData = {
-        $set: {
-            role: userData.role
-        }
+        $set: updatedData
     };
     const userClass = updateData(id, updatedUserData, options, usersCollection);
     userClass
@@ -682,7 +682,7 @@ app.get('/viewAssignmentSubmission/:id', async (req, res) => {
 
 app.get('/checkSubmission', async (req, res) => {
     const studentEmail = req.query.email;
-    const quiz = req.query.quiz; 
+    const quiz = req.query.quiz;
     const assignment = req.query.assignment;
     let query = {
         userEmail: studentEmail,
@@ -1357,6 +1357,44 @@ app.put('/payment/:id', async (req, res) => {
             })
         });
 });
+
+app.post("/feedback", async (req, res) => {
+    const data = req.body;
+    const feedback = postData(feedbackCollection, data);
+    feedback
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Feedback Success",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+})
+
+app.post("/report", async (req, res) => {
+    const data = req.body;
+    const report = postData(reportCollection, data);
+    report
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Report Success",
+                data: result,
+            })
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+})
 
 
 //Root Directory of Server

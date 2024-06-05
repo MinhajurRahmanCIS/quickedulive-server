@@ -38,6 +38,8 @@ const classworkCollection = QELDB.collection('classwork');
 const checkingCollection = QELDB.collection('checking');
 const enrollmentCollection = QELDB.collection('enrollments');
 const submissionCollection = QELDB.collection('submissions');
+const feedbackCollection = QELDB.collection('feedback');
+const reportCollection = QELDB.collection('report');
 
 
 module.exports = {
@@ -48,5 +50,7 @@ module.exports = {
     classworkCollection,
     checkingCollection,
     enrollmentCollection,
-    submissionCollection
+    submissionCollection,
+    feedbackCollection,
+    reportCollection
 }
