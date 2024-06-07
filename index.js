@@ -1358,6 +1358,25 @@ app.put('/payment/:id', async (req, res) => {
         });
 });
 
+
+app.get('/feedback', async (req, res) => {
+    const feedback = getData(feedbackCollection, {}, {_id: -1});
+    feedback
+        .then(result => {
+            return res.send({
+                success: true,
+                message: "Class Found!!",
+                data: result,
+            });
+        })
+        .catch(err => {
+            return res.send({
+                success: false,
+                message: err?.message
+            })
+        });
+});
+
 app.post("/feedback", async (req, res) => {
     const data = req.body;
     const feedback = postData(feedbackCollection, data);
