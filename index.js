@@ -4,6 +4,7 @@ const app = express();
 require('dotenv').config();
 const T = require("tesseract.js");
 const port = process.env.PORT || 5000;
+const SSLCommerzPayment = require('sslcommerz-lts');
 
 //Requiring MongoDB Connection & Collections
 const { dbConnect,
@@ -15,7 +16,8 @@ const { dbConnect,
     enrollmentCollection,
     submissionCollection,
     feedbackCollection,
-    reportCollection
+    reportCollection,
+    paymentCollection
 } = require('./DBConnection/DBConnection');
 
 //Requiring CRUD Functions
@@ -132,6 +134,11 @@ app.get('/jwt', (req, res) => {
             })
         });
 });
+
+// sslCommerceZ API Config
+const store_id = process.env.STORE_ID;
+const store_passwd = process.env.STORE_PASSWD
+const is_live = false
 
 // Users
 // Getting Users 
@@ -1331,36 +1338,9 @@ app.delete('/check/:id', async (req, res) => {
 });
 
 
-// Update Account
-// app.put('/payment/:id', async (req, res) alternative for verifyJWT
-app.put('/payment/:id', async (req, res) => {
-    const id = req.params.id;
-    const options = { upsert: true };
-    const updatedUserData = {
-        $set: {
-            account: "Premium"
-        }
-    };
-    const userClass = updateData(id, updatedUserData, options, usersCollection);
-    userClass
-        .then(result => {
-            return res.send({
-                success: true,
-                message: "User Updated",
-                data: result,
-            })
-        })
-        .catch(err => {
-            return res.send({
-                success: false,
-                message: err?.message
-            })
-        });
-});
-
 
 app.get('/feedback', async (req, res) => {
-    const feedback = getData(feedbackCollection, {}, {_id: -1});
+    const feedback = getData(feedbackCollection, {}, { _id: -1 });
     feedback
         .then(result => {
             return res.send({
@@ -1414,6 +1394,111 @@ app.post("/report", async (req, res) => {
             })
         });
 })
+
+
+app.get('/payment/info/:email/:transactionId', async (req, res) => {
+    const email = req.params.email;
+    const transactionId = req.params.transactionId;
+    const query = { email, transactionId };
+    const paymentInfo = await paymentCollection.findOne(query);
+    res.send(paymentInfo)
+})
+
+
+
+// Creating new payment
+// app.post('/payment', async (req, res) alternative for verifyJWT
+app.post('/payment', async (req, res) => {
+    const order = req.body;
+    const { name, email, amount, currency } = order;
+    if (!name || !email || !amount || !currency) {
+        return res.send("Something went wrong!");
+    };
+    const transactionId = new ObjectId().toString();
+    const data = {
+        total_amount: amount,
+        currency: currency,
+        tran_id: transactionId, // use unique tran_id for each api call
+        success_url: `http://localhost:5000/payment/success/${email}/${transactionId}`,
+        fail_url: `http://localhost:5000/payment/fail/${transactionId}`,
+        cancel_url: 'http://localhost:5000/payment/cancel',
+        ipn_url: 'http://localhost:3030/ipn',
+        shipping_method: 'Online',
+        product_name: 'Ai Paper Checker',
+        product_category: 'Electronic',
+        product_profile: 'general',
+        cus_name: name,
+        cus_email: email,
+        cus_add1: 'Dhaka',
+        cus_add2: 'Dhaka',
+        cus_city: 'Dhaka',
+        cus_state: 'Dhaka',
+        cus_postcode: '1000',
+        cus_country: 'Bangladesh',
+        cus_phone: '01711111111',
+        cus_fax: '01711111111',
+        ship_name: 'Customer Name',
+        ship_add1: 'Dhaka',
+        ship_add2: 'Dhaka',
+        ship_city: 'Dhaka',
+        ship_state: 'Dhaka',
+        ship_postcode: 1000,
+        ship_country: 'Bangladesh',
+    };
+    const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
+    sslcz.init(data).then(apiResponse => {
+        // Redirect the user to payment gateway
+        let GatewayPageURL = apiResponse.GatewayPageURL
+        console.log('apiResponse to: ', apiResponse)
+        paymentCollection.insertOne({
+            ...order,
+            transactionId,
+            paid: false,
+            service: "Ai Paper Checker"
+        })
+        res.send({ url: GatewayPageURL })
+        console.log('Redirecting to: ', GatewayPageURL)
+    });
+});
+
+app.post('/payment/success/:email/:transactionId', async (req, res) => {
+    const email = req.params.email;
+    const transactionId = req.params.transactionId;
+    if (!transactionId) {
+        return res.redirect(`http://localhost:3000/myhome/payment/fail`);
+    }
+    const result = await paymentCollection.updateOne({ transactionId }, {
+        $set:
+        {
+            paid: true,
+            transactionAt: new Date()
+        }
+    });
+
+    if (result.modifiedCount > 0) {
+        const result = await usersCollection.updateOne({ email }, {
+            $set: {
+                account: "Premium"
+            }
+        });
+        res.redirect(`http://localhost:3000/myhome/payment/success/${email}/${transactionId}`);
+    };
+})
+
+app.post('/payment/fail/:transactionId', async (req, res) => {
+    const transactionId = req.params.transactionId;
+    if (!transactionId) {
+        return res.redirect(`http://localhost:3000/myhome/payment/fail`);
+    }
+    const result = await paymentCollection.deleteOne({ transactionId });
+    if (result.deletedCount > 0) {
+        res.redirect(`http://localhost:3000/myhome/payment/fail`);
+    }
+})
+
+app.post('/payment/cancel', async (req, res) => {
+    res.redirect(`http://localhost:3000/myhome`);
+});
 
 
 //Root Directory of Server
