@@ -4,8 +4,10 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 // const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ermhfxw.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 //Local Connection
+const uri = process.env.LOCAL_DATA_BASE_URL;
 
-const uri = 'mongodb://localhost:27017';
+//Online Connection
+// const uri = process.env.ONLINE_DATA_BASE_URL;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
