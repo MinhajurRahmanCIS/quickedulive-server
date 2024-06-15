@@ -1421,7 +1421,7 @@ app.post('/payment', async (req, res) => {
         tran_id: transactionId, // use unique tran_id for each api call
         success_url: `http://localhost:5000/payment/success/${email}/${transactionId}`,
         fail_url: `http://localhost:5000/payment/fail/${transactionId}`,
-        cancel_url: 'http://localhost:5000/payment/cancel',
+        cancel_url: `http://localhost:5000/payment/cancel/${transactionId}`,
         ipn_url: 'http://localhost:3030/ipn',
         shipping_method: 'Online',
         product_name: 'Ai Paper Checker',
@@ -1496,8 +1496,12 @@ app.post('/payment/fail/:transactionId', async (req, res) => {
     }
 })
 
-app.post('/payment/cancel', async (req, res) => {
-    res.redirect(`http://localhost:3000/myhome`);
+app.post('/payment/cancel/:transactionId', async (req, res) => {
+    const transactionId = req.params.transactionId;
+    const result = await paymentCollection.deleteOne({ transactionId });
+    if (result.deletedCount > 0) {
+        res.redirect(`http://localhost:3000/myhome`);
+    }
 });
 
 
