@@ -45,8 +45,8 @@ const {
 } = require("@google/generative-ai");
 
 //Selected gemini AI Model and configuration 
-// const MODEL_NAME = "gemini-1.0-pro"; // old API
-const MODEL_NAME = "gemini-1.5-flash"; // new API
+// const MODEL_NAME = "gemini-1.0-pro"; // old model
+const MODEL_NAME = "gemini-1.5-flash"; // new model
 const API_KEY = process.env.GEMINI_KEY;
 
 const genAI = new GoogleGenerativeAI(API_KEY);
