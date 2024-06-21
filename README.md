@@ -29,4 +29,5 @@ Project Repository Link For Server side:
 2. .env file create on root (send message for Secret Keys Name)
 3. npm start or nodemon / node index.js
 4. Go To http://localhost:5000
-Lest Rock
+\
+Lets Rock
