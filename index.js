@@ -157,7 +157,7 @@ app.get('/users', async (req, res) => {
         .then(result => {
             return res.send({
                 success: true,
-                message: "Class Found!!",
+                message: "User Found!!",
                 data: result,
             });
         })
@@ -171,17 +171,14 @@ app.get('/users', async (req, res) => {
 
 app.get('/users/:email', async (req, res) => {
     const email = req.params.email;
-    const query = { email }
-    // const user = await usersCollection.findOne(query);
-    // console.log(user)
-    // res.send(user);
+    const query = { email };
 
     const getUser = getAUser(usersCollection, query);
     getUser
         .then(result => {
             return res.send({
                 success: true,
-                message: "Class Found!!",
+                message: "User Found!!",
                 data: result,
             });
         })
@@ -196,9 +193,8 @@ app.get('/users/:email', async (req, res) => {
 // Getting User Role
 app.get('/users/teacher/:email', async (req, res) => {
     const email = req.params.email;
-    const query = { email }
-    // const user = await usersCollection.findOne(query);
-    // res.send({ isTeacher: user?.role === "Teacher"});
+    const query = { email };
+
     const getUser = getAUser(usersCollection, query);
     getUser
         .then(result => {
@@ -218,9 +214,8 @@ app.get('/users/teacher/:email', async (req, res) => {
 
 app.get('/users/premium/:email', async (req, res) => {
     const email = req.params.email;
-    const query = { email }
-    // const user = await usersCollection.findOne(query);
-    // res.send({ isPremium: user?.account === "Premium" });
+    const query = { email };
+
     const getUser = getAUser(usersCollection, query);
     getUser
         .then(result => {
@@ -238,8 +233,8 @@ app.get('/users/premium/:email', async (req, res) => {
         });
 })
 
-// Getting Specific Class
-// app.get('/class/:id', verifyJWT, async (req, res) alternative for verifyJWT
+// Getting Specific Users
+// app.get('/users/:id', verifyJWT, async (req, res) alternative for verifyJWT
 app.get('/users/:id', async (req, res) => {
     const id = req.params.id;
     const getSpecificUser = getSpecificData(id, usersCollection);
@@ -260,16 +255,23 @@ app.get('/users/:id', async (req, res) => {
 });
 
 // Creating new class
-// app.post('/class', async (req, res) alternative for verifyJWT
+// app.post('/users', async (req, res) alternative for verifyJWT
 app.post('/users', async (req, res) => {
     const data = req.body;
+    const userExist = await usersCollection.findOne({email: data.email});
+    if(userExist){
+        return res.send({
+            success: false,
+            message: "User Already Exits"
+        });
+    }
     const user = postData(usersCollection, data);
     user
         .then(result => {
             return res.send({
                 success: true,
                 message: "New User Added",
-                data: result,
+                data: result
             })
         })
         .catch(err => {
@@ -281,7 +283,7 @@ app.post('/users', async (req, res) => {
 });
 
 // UpdateUser
-// app.put('/class/:id', async (req, res) alternative for verifyJWT
+// app.put('/users/:id', async (req, res) alternative for verifyJWT
 app.put('/users/:id', async (req, res) => {
     const id = req.params.id;
     const updatedData = req.body;
@@ -559,7 +561,7 @@ app.delete('/enrollments/:id', async (req, res) => {
 
 // Enrollment People
 // Getting Classes 
-// app.get('/class', verifyJWT, async (req, res) alternative for verifyJWT
+// app.get('/enrollmentPeople', verifyJWT, async (req, res) alternative for verifyJWT
 
 app.get('/enrollmentPeople', async (req, res) => {
     let query = {};
@@ -592,21 +594,6 @@ app.delete('/enrollmentPeople/:email', async (req, res) => {
         message: "Student Remove",
         data: remove,
     });
-    // const deleteClass = deleteData(id, classesCollection);
-    // deleteClass
-    //     .then(result => {
-    //         return res.send({
-    //             success: true,
-    //             message: "Class Deleted",
-    //             data: result,
-    //         })
-    //     })
-    //     .catch(err => {
-    //         return res.send({
-    //             success: false,
-    //             message: err?.message
-    //         })
-    //     });
 });
 
 

@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 // User JWT Token Generate Function
 const user_token = async (email, collection) => {
     const query = { email: email };
-    console.log(email)
+    console.log("JWT", email)
     const user = await collection.findOne(query);
     if (user) {
         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN)
