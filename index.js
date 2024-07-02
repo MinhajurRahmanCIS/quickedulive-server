@@ -333,13 +333,13 @@ app.delete('/users/:id', async (req, res) => {
 // Getting Classes 
 // app.get('/class', verifyJWT, async (req, res) alternative for verifyJWT
 
-app.get('/classes', async (req, res) => {
-    // const email = req.query.email;
-    // const decodedEmail = req.decoded.email;
+app.get('/classes', verifyJWT, async (req, res) => {
+    const email = req.query.email;
+    const decodedEmail = req.decoded.email;
 
-    // if (email !== decodedEmail) {
-    //     return res.status(403).send({ message: 'forbidden access' });
-    // };
+    if (email !== decodedEmail) {
+        return res.status(403).send({ message: 'forbidden access' });
+    };
     // Showing Specific Email Classes 
     let query = {};
 
@@ -1039,46 +1039,43 @@ app.post('/classwork', async (req, res) => {
     let prompt;
 
     if (quizNo) {
-        prompt = `Generate ${subject} questions with the topic ${topic} and provide the correct answers. Subject: ${subject}. Total Questions: ${totalQuestions}. Question Pattern: ${questionPattern}. Please provide the response in pure JSON format. Avoid using ${"json"} and ${""} to enclose the JSON.
+        prompt = `Generate ${subject} questions with the topic ${topic} and provide the correct answers. Subject: ${subject}. Total Questions: ${totalQuestions}. Question Pattern: ${questionPattern}. Please provide the response in pure JSON format. Avoid using "json" and "" to enclose the JSON.
             Carefully follow the Example:
         {
-                "quizNo": ${quizNo},
-                "classId": ${classId},  
-                    "date": ${date}, 
-                    "time": ${time}, 
-                    "examDuration": ${examDuration}, 
-                    "level": ${level}, 
-                    "topic": ${topic},
+            "quizNo": ${quizNo},
+            "classId": "${classId}",  
+            "date": "${date}", 
+            "time": "${time}", 
+            "examDuration": "${examDuration}", 
+            "level": "${level}", 
+            "topic": "${topic}",
+            "questions": [
                 {
-                    "questions": [
-                        {"_id": "count on sequence",
-                        "question": "",
-                        "options": ["a)", "b)", "c)", "d)"],
-                        "correctAnswer": "a)/b)/c)/d) The full answer"
-                    ]
-                   }
-        }
-        `;
+                    "_id": "count on sequence",
+                    "question": "",
+                    "options": ["a)", "b)", "c)", "d)"],
+                    "correctAnswer": "a)/b)/c)/d) The full answer"
+                }
+            ]
+        }`;
     } else {
-        prompt = `Generate ${subject} assignment that contain these topics: ${topic} with a scenario and number of questions ${totalQuestions}. Please provide the response in pure JSON format. Avoid using ${"json"} and ${""} to enclose the JSON. Carefully follow the example:
-
-    {
+        prompt = `Generate ${subject} assignment that contain these topics: ${topic} with a scenario and number of questions ${totalQuestions}. Please provide the response in pure JSON format. Avoid using "json" and "" to enclose the JSON. Carefully follow the example:
+        {
             "assignmentNo": ${assignmentNo},
-            "classId": ${classId},  
-            "date": ${date}, 
-            "time": ${time},
-            "level": ${level},
-            "topic": ${topic}, 
-            "scenario": "Write the scenario based on your question"
-            {
-                "questions": [
-                    {"_id": "count on sequence",
+            "classId": "${classId}",  
+            "date": "${date}", 
+            "time": "${time}",
+            "level": "${level}",
+            "topic": "${topic}", 
+            "scenario": "Write the scenario based on your question",
+            "questions": [
+                {
+                    "_id": "count on sequence",
                     "question": "${totalQuestions}",
                     "correctAnswer": "Proper Details"
-                ]
-               }
-    }
-    `;
+                }
+            ]
+        }`;
     }
 
     console.log("prompt", prompt);
@@ -1113,6 +1110,7 @@ app.post('/classwork', async (req, res) => {
         return res.send("Something Went wrong. Please Try Again");
     }
 });
+
 
 
 app.get('/classwork', async (req, res) => {
